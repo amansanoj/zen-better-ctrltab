@@ -4,8 +4,24 @@
  * https://github.com/psu/zen-mods/tree/main/better-ctrl-tab
  */
 
+/* FRAGILE: native browser URL, ctrlTab IDs/classes, popup ::part(content),
+   XUL favicon image and -moz-window-shadow are Gecko internals. Recheck after
+   Zen/Firefox upgrades, including native hover and keyboard focus behavior.
+   There are no mod animations; reduced-motion needs no override. */
 @-moz-document url("chrome://browser/content/browser.xhtml") {
   #ctrlTab-panel {
+    /* User tweaks: defaults preserve the original appearance. Blur is opt-in
+       (0px); it cannot sample the web page behind the native popup. */
+    --bct-blur: 0px;
+    --bct-opacity-light: 96%;
+    --bct-opacity-dark: 94%;
+    --bct-ring-color: light-dark(rgb(0 0 0 / 28%), rgb(225 225 225 / 38%));
+    --bct-selection: light-dark(rgb(0 0 0 / 7%), rgb(255 255 255 / 12%));
+    --bct-panel-radius: 24px;
+    --bct-card-radius: 16px;
+    --bct-preview-radius: 7px;
+    --bct-preview-size: 226px;
+    --bct-preview-ratio: 0.68;
     /* Keep a readable 96px thumbnail even in tiny windows. The existing
        overflow:auto container scrolls when this minimum cannot fit. */
     --bct-min-thumbnail-width: 96px;
@@ -15,13 +31,13 @@
     --bct-panel-padding: 10px;
     --bct-card-padding: 10px;
     --bct-gap: 6px;
-    --bct-card-width: max(calc(var(--bct-min-thumbnail-width) + 2 * var(--bct-card-padding)), min(226px, calc(
+    --bct-card-width: max(calc(var(--bct-min-thumbnail-width) + 2 * var(--bct-card-padding)), min(var(--bct-preview-size), calc(
       (100vw - 24px - 2 * var(--bct-panel-padding) -
         (var(--bct-columns) - 1) * var(--bct-gap)) / var(--bct-columns)
     )));
     --bct-badge-size: 24px;
     --bct-fg: light-dark(#212124, #f5f5f5);
-    --bct-surface: light-dark(rgb(245 245 246 / 96%), rgb(32 32 34 / 94%));
+    --bct-surface: light-dark(rgb(245 245 246 / var(--bct-opacity-light)), rgb(32 32 34 / var(--bct-opacity-dark)));
     --bct-line: light-dark(rgb(0 0 0 / 15%), rgb(255 255 255 / 12%));
 
     --panel-background: transparent !important;
@@ -29,7 +45,6 @@
     --panel-padding: 0 !important;
     --panel-shadow-margin: 0 !important;
     --panel-shadow: none !important;
-    -moz-default-appearance: none !important;
     -moz-window-shadow: none !important;
 
     &:has(.ctrlTab-preview:nth-child(2 of .ctrlTab-preview:not([hidden]))) { --bct-visible: 2; }
@@ -71,9 +86,10 @@
     margin: 0 auto !important;
     padding: var(--bct-panel-padding) !important;
     background: var(--bct-surface) !important;
+    backdrop-filter: blur(var(--bct-blur));
     color: var(--bct-fg) !important;
     border: 0 !important;
-    border-radius: 24px !important;
+    border-radius: var(--bct-panel-radius) !important;
     box-shadow: none !important;
   }
 
@@ -93,8 +109,8 @@
     }
 
     &:focus .ctrlTab-preview-inner {
-      background: light-dark(rgb(0 0 0 / 7%), rgb(255 255 255 / 12%)) !important;
-      box-shadow: inset 0 0 0 1px light-dark(rgb(0 0 0 / 28%), rgb(225 225 225 / 38%)) !important;
+      background: var(--bct-selection) !important;
+      box-shadow: inset 0 0 0 1px var(--bct-ring-color) !important;
     }
 
     @media (forced-colors: active) {
@@ -117,7 +133,7 @@
     margin: 0 !important;
     padding: var(--bct-card-padding) !important;
     border: 0 !important;
-    border-radius: 16px !important;
+    border-radius: var(--bct-card-radius) !important;
     background: transparent !important;
     text-shadow: none !important;
   }
@@ -131,8 +147,8 @@
   #ctrlTab-panel #ctrlTab-previews :is(.ctrlTab-canvas, .ctrlTab-canvas img, .ctrlTab-canvas canvas) {
     box-sizing: border-box;
     width: max(var(--bct-min-thumbnail-width), calc(var(--bct-card-width) - 2 * var(--bct-card-padding))) !important;
-    height: max(calc(var(--bct-min-thumbnail-width) * 0.68), calc((var(--bct-card-width) - 2 * var(--bct-card-padding)) * 0.68)) !important;
-    border-radius: 7px !important;
+    height: max(calc(var(--bct-min-thumbnail-width) * var(--bct-preview-ratio)), calc((var(--bct-card-width) - 2 * var(--bct-card-padding)) * var(--bct-preview-ratio))) !important;
+    border-radius: var(--bct-preview-radius) !important;
   }
 
   #ctrlTab-panel #ctrlTab-previews .ctrlTab-label {
@@ -176,7 +192,13 @@
     box-shadow: inset 0 0 0 1px var(--bct-line) !important;
   }
 
-  /* Zen exposes dropdown values as attributes on the mod's hidden marker. */
+  /* FRAGILE: Zen's display-name-derived marker must stay theme-Better-CtrlTab.
+     frost.ctrltab.favicon -> frost-ctrltab-favicon:
+       overlap-right = base defaults; overlap-left/center = alignment + x;
+       title-left/right = shared title-* grid + right-side override; none = hide.
+     frost.ctrltab.previews-per-row -> frost-ctrltab-previews-per-row:
+       values 1–7 set --bct-row-limit, default 5; viewport fit can reduce it.
+     All six favicon modes are intentional; there is no seventh mode. */
   :root:has(#theme-Better-CtrlTab[frost-ctrltab-favicon="overlap-left"]) #ctrlTab-panel {
     --bct-icon-align: start;
     --bct-icon-x: -5px;
@@ -237,4 +259,47 @@
   :root:has(#theme-Better-CtrlTab[frost-ctrltab-previews-per-row="7"]) #ctrlTab-panel {
     --bct-row-limit: 7;
   }
+
+  @media (prefers-reduced-transparency: reduce) {
+    #ctrlTab-panel {
+      --bct-opacity-light: 100%;
+      --bct-opacity-dark: 100%;
+      --bct-blur: 0px;
+    }
+
+    #ctrlTab-panel #ctrlTab-previews {
+      backdrop-filter: none;
+    }
+  }
+
+  @media (forced-colors: active) {
+    #ctrlTab-panel {
+      --bct-surface: Canvas;
+      --bct-fg: CanvasText;
+      --bct-line: CanvasText;
+      --bct-selection: Highlight;
+      --bct-ring-color: Highlight;
+    }
+
+    #ctrlTab-panel #ctrlTab-previews {
+      outline: 1px solid CanvasText;
+      outline-offset: -1px;
+      backdrop-filter: none;
+    }
+
+    #ctrlTab-panel #ctrlTab-previews .ctrlTab-preview:focus .ctrlTab-preview-inner {
+      color: HighlightText !important;
+    }
+
+    #ctrlTab-panel #ctrlTab-previews .ctrlTab-canvas {
+      outline: 1px solid CanvasText;
+      outline-offset: -1px;
+    }
+
+    #ctrlTab-panel #ctrlTab-previews .ctrlTab-favicon-container image {
+      background: Canvas !important;
+      outline: 1px solid CanvasText;
+    }
+  }
+
 }
