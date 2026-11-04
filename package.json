@@ -1,0 +1,6 @@
+{
+  "name": "zen-better-ctrltab-checks",
+  "private": true,
+  "scripts": {"lint:css": "stylelint chrome.css"},
+  "devDependencies": {"stylelint": "16.26.1"}
+}

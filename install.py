@@ -114,7 +114,7 @@ def plan(profile, uninstall=False):
     for path in (registry, folder, *(folder / name for name in FILES.values())):
         safe_path(profile, path)
     raw = registry.read_bytes() if registry.exists() else b""
-    mods = json.loads(raw.decode("utf-8-sig")) if raw else {}
+    mods = json.loads(raw.decode("utf-8-sig")) if registry.exists() else {}
     if not isinstance(mods, dict):
         raise ValueError("Unexpected Zen Mods registry format (expected an object).")
     existing = mods.get(MOD_ID)
@@ -140,7 +140,7 @@ def plan(profile, uninstall=False):
             entry["enabled"] = existing.get("enabled", True)
         mods[MOD_ID] = entry
     # Do not rewrite a semantically unchanged registry (or create one on no-op removal).
-    old = json.loads(raw.decode("utf-8-sig")) if raw else {}
+    old = json.loads(raw.decode("utf-8-sig")) if registry.exists() else {}
     if mods != old:
         newline = "\r\n" if b"\r\n" in raw else "\n"
         data = (json.dumps(mods, indent=2, ensure_ascii=False) + "\n").replace("\n", newline).encode("utf-8")
