@@ -6,9 +6,9 @@ A compact Ctrl+Tab switcher for Zen with a neutral frosted surface, a soft gray 
 
 ## Installation
 
-### Install from the release ZIP
+### Install from GitHub
 
-1. Download and extract the ZIP. Fully quit Zen.
+1. [Download the ZIP](https://github.com/amansanoj/zen-better-ctrltab/archive/refs/heads/main.zip) and extract it. Fully quit Zen.
 2. Open a terminal in the extracted folder and run `python3 install.py` (on Windows, `py -3 install.py`). This requires Python 3.
 3. Reopen Zen. In **Settings → Zen Mods**, toggle **Better CtrlTab** off and on once to rebuild Zen's stylesheet.
 4. Enable **Ctrl+Tab cycles through tabs in recently used order** in Zen's settings, then hold **Ctrl+Tab**.
