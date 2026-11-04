@@ -15,21 +15,6 @@ A compact Ctrl+Tab switcher for Zen with a neutral frosted surface, a soft gray 
 
 If the installer finds multiple profiles or uses a custom profile location, open `about:support` to find the active **Profile Folder**, quit Zen, and run `python3 install.py --profile "/path/to/profile"`. If you previously installed a manual CSS preview, remove its import from `userChrome.css` to avoid duplicate rules. To uninstall, use **Remove mod** on the Better CtrlTab card.
 
-### Preview the CSS locally before publication
-
-1. Extract the ZIP. In Zen, open `about:support` and open the **Profile Folder**.
-2. Create a `chrome` folder inside the profile if needed. Copy the extracted `chrome.css` there as `better-ctrltab.css`.
-3. Create or open `userChrome.css` in that folder. Add this import before any style rules.
-
-   ```css
-   @import url("better-ctrltab.css");
-   ```
-
-4. In `about:config`, set `toolkit.legacyUserProfileCustomizations.stylesheets` to `true`. Fully quit and reopen Zen.
-5. Enable recently used tab cycling in Zen's settings, then hold **Ctrl+Tab**.
-
-The manual CSS preview uses the default styles. The dropdowns require a Zen Mods installation that loads `preferences.json`. Remove the manual import before switching to the ZIP installer so the mod toggle controls the styling.
-
 ## Zen Mods settings
 
 Open **Settings → Zen Mods**, then click the gear on **Better CtrlTab**.
