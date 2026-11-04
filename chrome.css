@@ -1,0 +1,237 @@
+/*
+ * Better CtrlTab
+ * Based on Better CtrlTab Panel by Pontus Sundén.
+ * https://github.com/psu/zen-mods/tree/main/better-ctrl-tab
+ */
+
+@-moz-document url("chrome://browser/content/browser.xhtml") {
+  #ctrlTab-panel {
+    --bct-visible: 1;
+    --bct-fit: 1;
+    --bct-columns: min(var(--bct-visible), var(--bct-row-limit, 5), var(--bct-fit));
+    --bct-panel-padding: 10px;
+    --bct-card-padding: 10px;
+    --bct-gap: 6px;
+    --bct-card-width: min(226px, calc(
+      (100vw - 24px - 2 * var(--bct-panel-padding) -
+        (var(--bct-columns) - 1) * var(--bct-gap)) / var(--bct-columns)
+    ));
+    --bct-badge-size: 24px;
+    --bct-fg: light-dark(#212124, #f5f5f5);
+    --bct-surface: light-dark(rgb(245 245 246 / 96%), rgb(32 32 34 / 94%));
+    --bct-line: light-dark(rgb(0 0 0 / 15%), rgb(255 255 255 / 12%));
+
+    --panel-background: transparent !important;
+    --panel-background-color: transparent !important;
+    --panel-padding: 0 !important;
+    --panel-shadow-margin: 0 !important;
+    --panel-shadow: none !important;
+    -moz-default-appearance: none !important;
+    -moz-window-shadow: none !important;
+
+    &:has(.ctrlTab-preview:nth-child(2 of .ctrlTab-preview:not([hidden]))) { --bct-visible: 2; }
+    &:has(.ctrlTab-preview:nth-child(3 of .ctrlTab-preview:not([hidden]))) { --bct-visible: 3; }
+    &:has(.ctrlTab-preview:nth-child(4 of .ctrlTab-preview:not([hidden]))) { --bct-visible: 4; }
+    &:has(.ctrlTab-preview:nth-child(5 of .ctrlTab-preview:not([hidden]))) { --bct-visible: 5; }
+    &:has(.ctrlTab-preview:nth-child(6 of .ctrlTab-preview:not([hidden]))) { --bct-visible: 6; }
+    &:has(.ctrlTab-preview:nth-child(7 of .ctrlTab-preview:not([hidden]))) { --bct-visible: 7; }
+
+    /* Wrap before cards get too narrow. The popup still uses Zen's native anchor. */
+    @media (min-width: 430px) { --bct-fit: 2; }
+    @media (min-width: 626px) { --bct-fit: 3; }
+    @media (min-width: 822px) { --bct-fit: 4; }
+    @media (min-width: 1018px) { --bct-fit: 5; }
+    @media (min-width: 1214px) { --bct-fit: 6; }
+    @media (min-width: 1410px) { --bct-fit: 7; }
+  }
+
+  #ctrlTab-panel,
+  #ctrlTab-panel::part(content) {
+    appearance: none !important;
+    background: transparent !important;
+    border: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+  }
+
+  #ctrlTab-panel #ctrlTab-previews {
+    display: flex !important;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--bct-gap);
+    box-sizing: content-box;
+    width: calc(var(--bct-columns) * var(--bct-card-width) +
+      (var(--bct-columns) - 1) * var(--bct-gap) + 1px);
+    max-width: calc(100vw - 2 * var(--bct-panel-padding) - 20px);
+    max-height: calc(100vh - 2 * var(--bct-panel-padding) - 40px);
+    overflow: auto;
+    margin: 0 auto !important;
+    padding: var(--bct-panel-padding) !important;
+    background: var(--bct-surface) !important;
+    color: var(--bct-fg) !important;
+    border: 0 !important;
+    border-radius: 24px !important;
+    box-shadow: none !important;
+  }
+
+  #ctrlTab-panel .ctrlTab-preview[hidden] {
+    display: none !important;
+  }
+
+  #ctrlTab-panel #ctrlTab-previews .ctrlTab-preview:not([hidden]) {
+    flex: 0 0 var(--bct-card-width) !important;
+    box-sizing: border-box;
+    min-width: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+
+    &:focus {
+      outline: none !important;
+    }
+
+    &:focus .ctrlTab-preview-inner {
+      background: light-dark(rgb(0 0 0 / 7%), rgb(255 255 255 / 12%)) !important;
+      box-shadow: inset 0 0 0 1px light-dark(rgb(0 0 0 / 28%), rgb(225 225 225 / 38%)) !important;
+    }
+
+    @media (forced-colors: active) {
+      &:focus {
+        outline: 2px solid Highlight !important;
+        outline-offset: -2px;
+      }
+    }
+  }
+
+  #ctrlTab-panel #ctrlTab-previews .ctrlTab-preview-inner {
+    display: grid !important;
+    grid-template-columns: var(--bct-title-columns, minmax(0, 1fr));
+    grid-template-rows: auto auto;
+    row-gap: var(--bct-title-gap, 16px);
+    column-gap: 6px;
+    align-items: center;
+    box-sizing: border-box !important;
+    width: var(--bct-card-width);
+    margin: 0 !important;
+    padding: var(--bct-card-padding) !important;
+    border: 0 !important;
+    border-radius: 16px !important;
+    background: transparent !important;
+    text-shadow: none !important;
+  }
+
+  #ctrlTab-panel #ctrlTab-previews .ctrlTab-canvas {
+    grid-area: 1 / 1 / 2 / -1;
+    margin: 0 !important;
+    box-shadow: 0 0 0 1px var(--bct-line);
+  }
+
+  #ctrlTab-panel #ctrlTab-previews :is(.ctrlTab-canvas, .ctrlTab-canvas img, .ctrlTab-canvas canvas) {
+    box-sizing: border-box;
+    width: calc(var(--bct-card-width) - 2 * var(--bct-card-padding)) !important;
+    height: calc((var(--bct-card-width) - 2 * var(--bct-card-padding)) * 0.68) !important;
+    border-radius: 7px !important;
+  }
+
+  #ctrlTab-panel #ctrlTab-previews .ctrlTab-label {
+    grid-area: var(--bct-label-area, 2 / 1 / 3 / -1);
+    justify-self: stretch;
+    min-width: 0;
+    width: auto !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    color: inherit !important;
+    font: 500 12px / 1.35 system-ui !important;
+    text-align: var(--bct-label-align, center);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  #ctrlTab-panel #ctrlTab-previews .ctrlTab-favicon-container {
+    grid-area: var(--bct-icon-area, 1 / 1 / 2 / -1);
+    justify-self: var(--bct-icon-align, end);
+    align-self: var(--bct-icon-block-align, end);
+    display: var(--bct-icon-display, grid) !important;
+    place-items: center;
+    width: max-content;
+    margin: 0 !important;
+    padding: 0 !important;
+    transform: var(--bct-icon-transform, translate(var(--bct-icon-x, 5px), 25%));
+    z-index: 1;
+  }
+
+  #ctrlTab-panel #ctrlTab-previews .ctrlTab-favicon-container image {
+    position: static !important;
+    box-sizing: border-box;
+    width: var(--bct-badge-size) !important;
+    height: var(--bct-badge-size) !important;
+    margin: 0 !important;
+    padding: 3px !important;
+    border-radius: 5px;
+    background: light-dark(#f2f2f3, #232326) !important;
+    box-shadow: inset 0 0 0 1px var(--bct-line) !important;
+  }
+
+  /* Zen exposes dropdown values as attributes on the mod's hidden marker. */
+  :root:has(#theme-Better-CtrlTab[frost-ctrltab-favicon="overlap-left"]) #ctrlTab-panel {
+    --bct-icon-align: start;
+    --bct-icon-x: -5px;
+  }
+
+  :root:has(#theme-Better-CtrlTab[frost-ctrltab-favicon="overlap-center"]) #ctrlTab-panel {
+    --bct-icon-align: center;
+    --bct-icon-x: 0px;
+  }
+
+  :root:has(#theme-Better-CtrlTab[frost-ctrltab-favicon^="title-"]) #ctrlTab-panel {
+    --bct-title-columns: var(--bct-badge-size) minmax(0, 1fr);
+    --bct-label-area: 2 / 2 / 3 / 3;
+    --bct-label-align: start;
+    --bct-icon-area: 2 / 1 / 3 / 2;
+    --bct-icon-align: center;
+    --bct-icon-block-align: center;
+    --bct-icon-transform: none;
+    --bct-title-gap: 6px;
+  }
+
+  :root:has(#theme-Better-CtrlTab[frost-ctrltab-favicon="title-right"]) #ctrlTab-panel {
+    --bct-title-columns: minmax(0, 1fr) var(--bct-badge-size);
+    --bct-label-area: 2 / 1 / 3 / 2;
+    --bct-label-align: end;
+    --bct-icon-area: 2 / 2 / 3 / 3;
+  }
+
+  :root:has(#theme-Better-CtrlTab[frost-ctrltab-favicon="none"]) #ctrlTab-panel {
+    --bct-icon-display: none;
+    --bct-title-gap: 6px;
+  }
+
+  :root:has(#theme-Better-CtrlTab[frost-ctrltab-previews-per-row="1"]) #ctrlTab-panel {
+    --bct-row-limit: 1;
+  }
+
+  :root:has(#theme-Better-CtrlTab[frost-ctrltab-previews-per-row="2"]) #ctrlTab-panel {
+    --bct-row-limit: 2;
+  }
+
+  :root:has(#theme-Better-CtrlTab[frost-ctrltab-previews-per-row="3"]) #ctrlTab-panel {
+    --bct-row-limit: 3;
+  }
+
+  :root:has(#theme-Better-CtrlTab[frost-ctrltab-previews-per-row="4"]) #ctrlTab-panel {
+    --bct-row-limit: 4;
+  }
+
+  :root:has(#theme-Better-CtrlTab[frost-ctrltab-previews-per-row="5"]) #ctrlTab-panel {
+    --bct-row-limit: 5;
+  }
+
+  :root:has(#theme-Better-CtrlTab[frost-ctrltab-previews-per-row="6"]) #ctrlTab-panel {
+    --bct-row-limit: 6;
+  }
+
+  :root:has(#theme-Better-CtrlTab[frost-ctrltab-previews-per-row="7"]) #ctrlTab-panel {
+    --bct-row-limit: 7;
+  }
+}

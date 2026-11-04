@@ -1,0 +1,70 @@
+[
+  {
+    "label": "Favicon position",
+    "property": "frost.ctrltab.favicon",
+    "type": "dropdown",
+    "defaultValue": "overlap-right",
+    "options": [
+      {
+        "label": "Overlap left",
+        "value": "overlap-left"
+      },
+      {
+        "label": "Overlap center",
+        "value": "overlap-center"
+      },
+      {
+        "label": "Overlap right",
+        "value": "overlap-right"
+      },
+      {
+        "label": "Before the title",
+        "value": "title-left"
+      },
+      {
+        "label": "After the title",
+        "value": "title-right"
+      },
+      {
+        "label": "None (hide favicon)",
+        "value": "none"
+      }
+    ]
+  },
+  {
+    "label": "Previews per row",
+    "property": "frost.ctrltab.previews-per-row",
+    "type": "dropdown",
+    "defaultValue": "5",
+    "options": [
+      {
+        "label": "1",
+        "value": "1"
+      },
+      {
+        "label": "2",
+        "value": "2"
+      },
+      {
+        "label": "3",
+        "value": "3"
+      },
+      {
+        "label": "4",
+        "value": "4"
+      },
+      {
+        "label": "5",
+        "value": "5"
+      },
+      {
+        "label": "6",
+        "value": "6"
+      },
+      {
+        "label": "7",
+        "value": "7"
+      }
+    ]
+  }
+]
