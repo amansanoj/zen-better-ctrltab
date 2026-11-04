@@ -1,6 +1,8 @@
 # Better CtrlTab
 
-![Better CtrlTab preview](preview.png)
+| Before | After |
+| --- | --- |
+| ![Default Zen Ctrl+Tab switcher](before.jpg) | ![Better CtrlTab switcher](after.jpg) |
 
 A compact Ctrl+Tab switcher for Zen with a neutral frosted surface, a soft gray selection ring, and configurable preview rows and favicons.
 
