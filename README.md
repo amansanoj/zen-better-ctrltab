@@ -1,45 +1,114 @@
 # Better CtrlTab
 
+A compact CSS-only Ctrl+Tab switcher for Zen, with a neutral frosted surface,
+a soft gray selection ring, and configurable preview rows and favicons.
+
+## Install
+
+1. [Download the ZIP](https://github.com/amansanoj/zen-better-ctrltab/archive/refs/heads/main.zip),
+   extract it, and fully quit Zen.
+2. In the extracted folder, run `python3 install.py` (Windows: `py -3 install.py`).
+   Requires **Python 3.9+**, with no extra Python packages. Review the printed
+   changes and confirm; use `--yes` for noninteractive installation.
+3. Reopen Zen. In **Settings → Zen Mods**, toggle **Better CtrlTab** off and on
+   once to rebuild the stylesheet.
+4. Enable **Ctrl+Tab cycles through tabs in recently used order**, then hold
+   **Ctrl+Tab** with several tabs open.
+
+Requires Zen Mods and the native Ctrl+Tab switcher. Untested on a live Zen
+build for compact mode, tab orientations, and accessibility settings.
+
+For an explicit profile (recommended with multiple installations):
+
+```sh
+python3 install.py --list-profiles
+python3 install.py --profile "/path/from/about:support" --dry-run
+python3 install.py --profile "/path/from/about:support"
+```
+
+The installer reads `profiles.ini` / `installs.ini`, including install defaults
+and relative or absolute profile paths. It also searches conventional macOS,
+Windows, Linux, Flatpak and Snap locations. Ambiguous defaults require
+`--profile`. Custom locations can always be selected using the **Profile Folder**
+shown in `about:support`.
+
+Existing files that change are copied into timestamped
+`<profile>/.better-ctrltab-backups/` directories before writes. Unchanged files
+are left alone; reinstall preserves the mod's enabled state. Quit Zen before
+applying changes. `--yes` never overrides profile lock checks.
+
+## Settings
+
+Open **Settings → Zen Mods**, then the gear on **Better CtrlTab**.
+
+| Setting | Options | Default |
+| --- | --- | --- |
+| Favicon position | Overlap left, center, right; before or after title; hide | Overlap right |
+| Previews per row | 1–7 | 5 |
+
+Rows are capped at the selected column count; narrow windows can use fewer
+columns. The final row is centered.
+
+To change the **total** number of previews, search for
+`browser.ctrlTab.maxPreviews` in `about:config`. If your build exposes it, you
+can change it yourself; otherwise the build controls the total. For example,
+nine eligible previews with five columns can form rows of five and four.
+**Neither the mod nor the installer writes this preference.**
+
+## Preview
+
 | Before | After |
 | --- | --- |
 | ![Default Zen Ctrl+Tab switcher](before.jpg) | ![Better CtrlTab switcher](after.jpg) |
 
-A compact Ctrl+Tab switcher for Zen with a neutral frosted surface, a soft gray selection ring, and configurable preview rows and favicons.
+These are the existing screenshots, not verification of this revision. Zen
+controls the popup's screen position. The default frosted surface is translucent;
+it does not sample or blur the web page behind it.
 
-## Installation
+## Troubleshooting
 
-### Install from GitHub
+- **Mod missing:** confirm that `--profile` points to the active Profile Folder
+  from `about:support`, then reopen Zen and inspect Settings → Zen Mods.
+- **Settings have no effect:** keep the display name **Better CtrlTab**; its name
+  determines the hidden settings marker. Toggle the mod off/on to rebuild CSS.
+- **Duplicate styles:** remove the old manual import of this mod from
+  `userChrome.css`, then restart Zen. The installer does not edit that file.
+- **Multiple profiles:** use `--list-profiles`, then select the active folder
+  explicitly. Different installations can have different defaults.
+- **Profile locked:** fully quit Zen, including background processes. A leftover
+  lock may be stale; verify that no browser is using the profile before manually
+  addressing it. A dry run is allowed while locked and writes nothing.
+- **Installer fails:** invalid registries and conflicting mod IDs are refused.
+  Check the printed error and backups. Writes are atomic per file, not across
+  the whole operation; after an interrupted operation, quit Zen and restore
+  affected files from the printed backup directory or rerun the installer.
+- **Popup changed after an update:** native IDs/classes are internal browser
+  interfaces. Report the exact Zen version, OS, theme, tab orientation and
+  compact-mode state.
 
-1. [Download the ZIP](https://github.com/amansanoj/zen-better-ctrltab/archive/refs/heads/main.zip) and extract it. Fully quit Zen.
-2. Open a terminal in the extracted folder and run `python3 install.py` (on Windows, `py -3 install.py`). This requires Python 3.
-3. Reopen Zen. In **Settings → Zen Mods**, toggle **Better CtrlTab** off and on once to rebuild Zen's stylesheet.
-4. Enable **Ctrl+Tab cycles through tabs in recently used order** in Zen's settings, then hold **Ctrl+Tab**.
+## Uninstall
 
-If the installer finds multiple profiles or uses a custom profile location, open `about:support` to find the active **Profile Folder**, quit Zen, and run `python3 install.py --profile "/path/to/profile"`. If you previously installed a manual CSS preview, remove its import from `userChrome.css` to avoid duplicate rules. To uninstall, use **Remove mod** on the Better CtrlTab card.
+Quit Zen, then run:
 
-## Zen Mods settings
+```sh
+python3 install.py --profile "/path/to/profile" --uninstall --dry-run
+python3 install.py --profile "/path/to/profile" --uninstall
+```
 
-Open **Settings → Zen Mods**, then click the gear on **Better CtrlTab**.
+This backs up and removes this mod's registry entry and three bundled files.
+Unrelated mods and unknown files in its folder are preserved; the mod folder is
+removed only if empty. Backups remain for manual recovery. Alternatively use
+**Remove mod** on its Zen Mods card (Zen handles that removal). Remove any old
+manual CSS import separately.
 
-| Setting | Options | Default |
-| --- | --- | --- |
-| Favicon position | Overlap left, center, or right. Before or after the title. Hide favicon. | Overlap right |
-| Previews per row | 1–7 | 5 |
+## Source and credits
 
-**Previews per row** caps the number of columns. Narrow layouts can use fewer columns.
+Based on [Better CtrlTab Panel](https://github.com/psu/zen-mods/tree/main/better-ctrl-tab)
+by **Pontus Sundén**.
 
-To change the **total number of previews**, open `about:config` and search for `browser.ctrlTab.maxPreviews`. If your Zen build exposes it, set it to the total you want. For example, set it to **9** and keep **Previews per row** at **5** to get **5 + 4** in a wide enough window with nine eligible tabs. If the preference is absent, your build controls the total. The mod never writes this preference.
+Derived from Better CtrlTab Panel; the upstream repository does not currently state a license.
 
-## Source package
-
-`chrome.css` styles the switcher and `preferences.json` defines the two Zen Mods dropdowns. Use **Better CtrlTab** as the display name so the stylesheet can find the settings marker Zen creates. The ZIP contains the source files for the `zen-better-ctrltab` repository. The included installer registers the bundled files directly with Zen Mods.
-
-Zen controls the native popup's screen position. The frosted appearance is a translucent surface and does not sample or blur the page behind it. The CSS-only package requires no JavaScript loader.
-
-Zen displays this description below the mod name.
-
-> Customize Ctrl+Tab. Set the total in about:config via browser.ctrlTab.maxPreviews.
-
-## Credits
-
-Based on [Better CtrlTab Panel](https://github.com/psu/zen-mods/tree/main/better-ctrl-tab) by Pontus Sundén.
+`chrome.css` styles the switcher; `preferences.json` defines the two dropdowns.
+The installer registers the bundled files directly with Zen Mods using a stable
+UUID. There is no JavaScript loader or runtime dependency. Tweak variables,
+development checks and screenshot guidance are in [CONTRIBUTING.md](CONTRIBUTING.md).
