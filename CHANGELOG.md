@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Check native profile locks instead of blocking on persistent lock files after
+  Zen exits. Keep checked locks held during writes and clarify plan/error output.
+
 - Review native CSS hooks, settings, installer safety and upstream licensing.
 - Add profile INI discovery, conventional Flatpak/Snap paths, explicit change
   plans, confirmation, dry runs, profile listing and uninstall.

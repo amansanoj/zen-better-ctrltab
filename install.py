@@ -1,6 +1,7 @@
 """Install or remove Better CtrlTab in a closed Zen profile (Python 3.9+)."""
 import argparse
 import configparser
+from contextlib import contextmanager, ExitStack
 from datetime import datetime, timezone
 import json
 import os
@@ -84,12 +85,40 @@ def safe_path(profile, path):
             raise ValueError(f"Refusing linked path: {part}")
 
 
+@contextmanager
+def profile_guard(profile):
+    """Probe existing native locks without deleting/truncating lock files.
+
+    Gecko uses a whole-file fcntl write lock on Unix (.parentlock), and a
+    no-sharing file handle on Windows (parent.lock). Existence alone does not
+    mean the profile is in use. Keep handles/locks until writes finish.
+    Legacy symlink locks remain ambiguous and are refused, never removed.
+    """
+    with ExitStack() as stack:
+        for name in ("parent.lock", ".parentlock", "lock"):
+            path = profile / name
+            if not os.path.lexists(path):
+                continue
+            if path.is_symlink():
+                raise ValueError(f"Cannot verify legacy profile lock: {path}. "
+                                 "Quit Zen and verify it manually; no mod files were changed.")
+            try:
+                safe_path(profile, path)
+                # No create/truncate: a persistent unlocked file is harmless.
+                stream = stack.enter_context(path.open("r+b"))
+                if os.name != "nt":
+                    import fcntl
+                    fcntl.lockf(stream.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+                # Windows opening fails if Zen holds its no-sharing handle.
+            except OSError as error:
+                raise ValueError(f"Zen may be running, or its lock cannot be checked: {path}. "
+                                 "Quit Zen and check permissions; no mod files were changed.") from error
+        yield
+
+
 def check_closed(profile):
-    # Existence deliberately includes dangling Unix lock symlinks. Stale locks
-    # require manual verification; --yes never overrides this protection.
-    for name in ("parent.lock", ".parentlock", "lock"):
-        if os.path.lexists(profile / name):
-            raise ValueError(f"Zen may be running: {profile / name}. Quit Zen; verify any stale lock manually.")
+    with profile_guard(profile):
+        pass
 
 
 def atomic_write(path, data):
@@ -172,6 +201,7 @@ def main(argv=None):
     backup = profile / ".better-ctrltab-backups" / (datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S.%fZ-") + uuid.uuid4().hex[:8])
     safe_path(profile, backup)
     print(f"Profile: {profile}")
+    print("Planned changes (not applied yet):")
     for path, data in changes:
         print(f"{'REMOVE' if data is None else 'REPLACE' if path.exists() else 'CREATE'} {path}")
         if path.exists():
@@ -192,21 +222,28 @@ def main(argv=None):
         if input("Apply these changes? [y/N] ").strip().lower() not in ("y", "yes"):
             print("Cancelled; no files changed.")
             return 0
-    check_closed(profile)
-    # Complete all backups before modifying any original file.
-    for path, _ in changes:
-        safe_path(profile, path)
-        if path.exists():
-            target = backup / path.relative_to(profile)
-            target.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(path, target)
-    for path, data in changes:
-        if data is None:
-            path.unlink()
-        else:
-            atomic_write(path, data)
-    if cleanup and not any(folder.iterdir()):
-        folder.rmdir()
+    with profile_guard(profile):
+        # Complete all backups before modifying any original file.
+        try:
+            for path, _ in changes:
+                safe_path(profile, path)
+                if path.exists():
+                    target = backup / path.relative_to(profile)
+                    target.parent.mkdir(parents=True, exist_ok=True)
+                    shutil.copy2(path, target)
+        except (OSError, ValueError) as error:
+            raise ValueError(f"Backup failed: {error}. No mod files were changed.") from error
+        try:
+            for path, data in changes:
+                if data is None:
+                    path.unlink()
+                else:
+                    atomic_write(path, data)
+            if cleanup and not any(folder.iterdir()):
+                folder.rmdir()
+        except OSError as error:
+            raise OSError(f"{error}. Operation may be partially applied; "
+                          f"restore affected files from {backup} if needed.") from error
     print("Removed Better CtrlTab." if args.uninstall else
           "Installed Better CtrlTab. Reopen Zen and toggle it off/on in Settings > Zen Mods.")
     return 0
@@ -216,4 +253,4 @@ if __name__ == "__main__":
     try:
         sys.exit(main())
     except (OSError, ValueError, configparser.Error) as error:
-        sys.exit(f"Operation failed: {error}. If partially applied, restore files from the printed backup paths.")
+        sys.exit(f"Operation failed: {error}")

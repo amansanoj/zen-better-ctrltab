@@ -3,6 +3,9 @@ import contextlib
 import importlib.util
 import io
 import json
+import os
+import subprocess
+import sys
 from pathlib import Path
 import tempfile
 import unittest
@@ -91,12 +94,79 @@ class InstallerTests(unittest.TestCase):
         self.run_cli('--uninstall', '--yes')
         self.assertFalse(self.folder.exists())
 
-    def test_lock_refused_even_with_yes(self):
-        (self.profile / 'parent.lock').touch()
-        before = self.snapshot()
-        with self.assertRaisesRegex(ValueError, 'running'):
+    def test_persistent_unlocked_files_do_not_block_install(self):
+        for name in ('parent.lock', '.parentlock', 'lock'):
+            (self.profile / name).write_bytes(b'leftover lock file')
+        self.run_cli('--yes')
+        self.assertIn(installer.MOD_ID, json.loads(self.registry.read_bytes()))
+        for name in ('parent.lock', '.parentlock', 'lock'):
+            self.assertEqual((self.profile / name).read_bytes(), b'leftover lock file')
+
+    def test_active_native_lock_refused_even_with_yes(self):
+        lock = self.profile / ('parent.lock' if os.name == 'nt' else '.parentlock')
+        lock.write_bytes(b'')
+        # POSIX record locks are per-process: use a real child, not a mock or
+        # a second descriptor in the test process. Match Gecko's Windows handle.
+        script = r"""
+import os, sys
+if os.name == 'nt':
+    import ctypes
+    from ctypes import wintypes
+    create = ctypes.WinDLL('kernel32', use_last_error=True).CreateFileW
+    create.argtypes = [wintypes.LPCWSTR, wintypes.DWORD, wintypes.DWORD,
+                       ctypes.c_void_p, wintypes.DWORD, wintypes.DWORD, wintypes.HANDLE]
+    create.restype = wintypes.HANDLE
+    handle = create(sys.argv[1], 0xC0000000, 0, None, 3, 0, None)
+    if handle == ctypes.c_void_p(-1).value:
+        raise ctypes.WinError(ctypes.get_last_error())
+else:
+    import fcntl
+    stream = open(sys.argv[1], 'r+b')
+    fcntl.lockf(stream.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+print('locked', flush=True)
+sys.stdin.readline()
+"""
+        child = subprocess.Popen([sys.executable, '-u', '-c', script, str(lock)],
+                                 stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                                 stderr=subprocess.PIPE, text=True)
+        try:
+            self.assertEqual(child.stdout.readline().strip(), 'locked')
+            before = self.snapshot() if os.name != 'nt' else self.registry.read_bytes()
+            with self.assertRaisesRegex(ValueError, 'no mod files were changed'):
+                self.run_cli('--yes')
+            result = subprocess.run([sys.executable, str(installer.SOURCE / 'install.py'),
+                                     '--profile', str(self.profile), '--yes'],
+                                    capture_output=True, text=True, timeout=15)
+            self.assertEqual(result.returncode, 1)
+            self.assertIn('no mod files were changed', result.stderr)
+            self.assertNotIn('restore', result.stderr)
+            if os.name != 'nt':
+                self.assertEqual(self.snapshot(), before)
+            else:
+                self.assertEqual(self.registry.read_bytes(), before)
+                self.assertFalse(self.folder.exists())
+        finally:
+            try:
+                child.communicate('done\n', timeout=10)
+            except subprocess.TimeoutExpired:
+                child.kill()
+                child.communicate()
+                raise
+        self.assertEqual(child.returncode, 0)
+        # Releasing the held lock leaves the file behind; installation succeeds.
+        self.run_cli('--yes')
+        self.assertTrue(self.folder.exists())
+
+    def test_legacy_symlink_lock_is_not_followed_or_removed(self):
+        path = self.profile / 'lock'
+        try:
+            path.symlink_to('unresolved-owner')
+        except OSError:
+            self.skipTest('Symlinks unavailable for this account')
+        with self.assertRaisesRegex(ValueError, 'legacy profile lock'):
             self.run_cli('--yes')
-        self.assertEqual(self.snapshot(), before)
+        self.assertTrue(path.is_symlink())
+        self.assertFalse(self.folder.exists())
 
     def test_invalid_registry_does_not_modify_bundle(self):
         for bad in (b'not JSON', b'[]', b''):
@@ -125,7 +195,7 @@ class InstallerTests(unittest.TestCase):
     def test_backup_failure_prevents_writes(self):
         before = self.snapshot()
         with mock.patch.object(installer.shutil, 'copy2', side_effect=OSError('full disk')):
-            with self.assertRaises(OSError):
+            with self.assertRaisesRegex(ValueError, 'No mod files were changed'):
                 self.run_cli('--yes')
         self.assertEqual(self.snapshot(), before)
 

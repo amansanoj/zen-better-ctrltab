@@ -75,9 +75,10 @@ it does not sample or blur the web page behind it.
   `userChrome.css`, then restart Zen. The installer does not edit that file.
 - **Multiple profiles:** use `--list-profiles`, then select the active folder
   explicitly. Different installations can have different defaults.
-- **Profile locked:** fully quit Zen, including background processes. A leftover
-  lock may be stale; verify that no browser is using the profile before manually
-  addressing it. A dry run is allowed while locked and writes nothing.
+- **Profile locked:** fully quit Zen, including background processes. Persistent
+  unlocked lock files are accepted automatically; do not delete them. Active
+  locks, unreadable locks, and ambiguous legacy symlink locks are refused.
+  A dry run is allowed while locked and writes nothing.
 - **Installer fails:** invalid registries and conflicting mod IDs are refused.
   Check the printed error and backups. Writes are atomic per file, not across
   the whole operation; after an interrupted operation, quit Zen and restore
