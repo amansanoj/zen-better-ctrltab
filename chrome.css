@@ -6,16 +6,19 @@
 
 @-moz-document url("chrome://browser/content/browser.xhtml") {
   #ctrlTab-panel {
+    /* Keep a readable 96px thumbnail even in tiny windows. The existing
+       overflow:auto container scrolls when this minimum cannot fit. */
+    --bct-min-thumbnail-width: 96px;
     --bct-visible: 1;
     --bct-fit: 1;
     --bct-columns: min(var(--bct-visible), var(--bct-row-limit, 5), var(--bct-fit));
     --bct-panel-padding: 10px;
     --bct-card-padding: 10px;
     --bct-gap: 6px;
-    --bct-card-width: min(226px, calc(
+    --bct-card-width: max(calc(var(--bct-min-thumbnail-width) + 2 * var(--bct-card-padding)), min(226px, calc(
       (100vw - 24px - 2 * var(--bct-panel-padding) -
         (var(--bct-columns) - 1) * var(--bct-gap)) / var(--bct-columns)
-    ));
+    )));
     --bct-badge-size: 24px;
     --bct-fg: light-dark(#212124, #f5f5f5);
     --bct-surface: light-dark(rgb(245 245 246 / 96%), rgb(32 32 34 / 94%));
@@ -127,8 +130,8 @@
 
   #ctrlTab-panel #ctrlTab-previews :is(.ctrlTab-canvas, .ctrlTab-canvas img, .ctrlTab-canvas canvas) {
     box-sizing: border-box;
-    width: calc(var(--bct-card-width) - 2 * var(--bct-card-padding)) !important;
-    height: calc((var(--bct-card-width) - 2 * var(--bct-card-padding)) * 0.68) !important;
+    width: max(var(--bct-min-thumbnail-width), calc(var(--bct-card-width) - 2 * var(--bct-card-padding))) !important;
+    height: max(calc(var(--bct-min-thumbnail-width) * 0.68), calc((var(--bct-card-width) - 2 * var(--bct-card-padding)) * 0.68)) !important;
     border-radius: 7px !important;
   }
 
