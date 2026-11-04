@@ -3,6 +3,15 @@
 A compact CSS-only Ctrl+Tab switcher for Zen, with a neutral frosted surface,
 a soft gray selection ring, and configurable preview rows and favicons.
 
+## Index
+
+- [Install](#install)
+- [Settings](#settings)
+- [Preview](#preview)
+- [Troubleshooting](#troubleshooting)
+- [Uninstall](#uninstall)
+- [Source and credits](#source-and-credits)
+
 ## Install
 
 1. [Download the ZIP](https://github.com/amansanoj/zen-better-ctrltab/archive/refs/heads/main.zip),
